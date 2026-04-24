@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wolfflix Homework - Joey Doesn't Share Food</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React & ReactDOM (Production) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Animations */
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pop { 0% { transform: scale(0.95); opacity: 0;} 100% { transform: scale(1); opacity: 1;} }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        
+        .animate-slideIn { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-shake { animation: shake 0.4s ease-in-out forwards; }
+
+        /* Hide scrollbar for mobile feel */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="text-white flex justify-center items-center min-h-[100dvh]">
+
+    <div id="root" class="w-full h-full max-w-md bg-[#0a0a0a] relative overflow-hidden sm:h-[850px] sm:rounded-[40px] sm:border-8 sm:border-[#1f1f1f] sm:shadow-2xl flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- CONSTANTS ---
+        const YOUTUBE_ID = "hmL6Z9rX8MU";
+
+        // --- COMPONENTS ---
+        const Icon = ({ name, size = 20, className = "" }) => (
+            <i className={`fa-solid fa-${name} ${className}`} style={{ fontSize: size }}></i>
+        );
+
+        // --- DATA: 15 EXERCISES ---
+        const QUESTIONS = [
+            {
+                id: 1,
+                type: "vocab",
+                question: "What is a 'Garden Salad'?",
+                options: [
+                    "A salad with fried chicken.",
+                    "A healthy mix of lettuce and vegetables.",
+                    "A dessert made of fruits.",
+                    "A soup with potatoes."
+                ],
+                correct: 1,
+                explanation: "Garden salad is a basic, healthy mix of fresh vegetables."
+            },
+            {
+                id: 2,
+                type: "grammar",
+                question: "Complete the sentence: 'We _______ getting along really well.'",
+                options: [
+                    "was",
+                    "are",
+                    "were",
+                    "is"
+                ],
+                correct: 2,
+                explanation: "With 'We', we use 'were' for the Past Continuous."
+            },
+            {
+                id: 3,
+                type: "expression",
+                question: "If something happens 'out of nowhere', it means...",
+                options: [
+                    "It happens slowly.",
+                    "It happens in a beautiful place.",
+                    "It happens suddenly and unexpectedly.",
+                    "It never happens."
+                ],
+                correct: 2,
+                explanation: "'Out of nowhere' means a complete, sudden surprise."
+            },
+            {
+                id: 4,
+                type: "grammar",
+                question: "Which tense sets the 'background action' in a story?",
+                options: [
+                    "Present Simple",
+                    "Past Continuous (was/were + verb-ing)",
+                    "Future Simple",
+                    "Past Simple"
+                ],
+                correct: 1,
+                explanation: "Past Continuous sets the long, ongoing background scene."
+            },
+            {
+                id: 5,
+                type: "grammar",
+                question: "Which sentence is correct?",
+                options: [
+                    "We were having dinner when she took my fries.",
+                    "We had dinner when she was taking my fries.",
+                    "We have dinner when she took my fries.",
+                    "We were having dinner when she takes my fries."
+                ],
+                correct: 0,
+                explanation: "Past Continuous (were having) for the long action, Past Simple (took) for the short interruption."
+            },
+            {
+                id: 6,
+                type: "vocab",
+                question: "What is a 'Coulis'?",
+                options: [
+                    "A type of french fry.",
+                    "A thick sauce made from fruits or vegetables.",
+                    "A terrible date.",
+                    "A garden salad."
+                ],
+                correct: 1,
+                explanation: "Joey called it 'red crap', but a coulis is actually an elegant fruit sauce!"
+            },
+            {
+                id: 7,
+                type: "expression",
+                question: "What does 'set you up' mean in a dating context?",
+                options: [
+                    "To build a chair for you.",
+                    "To make you fall down.",
+                    "To arrange a romantic date for you with a friend.",
+                    "To pay for your dinner."
+                ],
+                correct: 2,
+                explanation: "When friends 'set you up', they organize a blind date for you."
+            },
+            {
+                id: 8,
+                type: "expression",
+                question: "Complete the idiom: 'This is a two-way _______!'",
+                options: [
+                    "road",
+                    "car",
+                    "street",
+                    "house"
+                ],
+                correct: 2,
+                explanation: "A 'two-way street' means a situation must be fair for both sides."
+            },
+            {
+                id: 9,
+                type: "vocab",
+                question: "What did Joey mean when he said 'red crap'?",
+                options: [
+                    "He was praising the chef.",
+                    "He used an informal/derogatory word for the sauce.",
+                    "He was asking for ketchup.",
+                    "He wanted more strawberries."
+                ],
+                correct: 1,
+                explanation: "'Crap' is informal and means something is bad or unwanted."
+            },
+            {
+                id: 10,
+                type: "grammar",
+                question: "When ordering at a restaurant (immediate decision), we say:",
+                options: [
+                    "I am going to have a salad.",
+                    "I have a salad.",
+                    "I'll (I will) have a salad.",
+                    "I having a salad."
+                ],
+                correct: 2,
+                explanation: "Use 'will' (I'll have) for instant decisions made at the moment of speaking."
+            },
+            {
+                id: 11,
+                type: "vocab",
+                question: "Complete the iconic phrase: 'Joey doesn't share _______!'",
+                options: [
+                    "money",
+                    "clothes",
+                    "secrets",
+                    "food"
+                ],
+                correct: 3,
+                explanation: "Joey's universal rule: He never shares food!"
+            },
+            {
+                id: 12,
+                type: "grammar",
+                question: "Joey ALWAYS eats his food. This is a...",
+                options: [
+                    "Daily habit / Fact (Present Simple)",
+                    "Action happening right now (Present Continuous)",
+                    "Past event (Past Simple)",
+                    "Future plan"
+                ],
+                correct: 0,
+                explanation: "Routines and rules are expressed using the Present Simple."
+            },
+            {
+                id: 13,
+                type: "expression",
+                question: "If Sarah tells Joey 'It's not a big deal', she means:",
+                options: [
+                    "It is very expensive.",
+                    "It is very important.",
+                    "It is not important to worry about.",
+                    "It is a large meal."
+                ],
+                correct: 2,
+                explanation: "Not a big deal = Don't worry, it doesn't matter."
+            },
+            {
+                id: 14,
+                type: "grammar",
+                question: "Choose the correct spelling of the past simple of 'take':",
+                options: [
+                    "Taked",
+                    "Took",
+                    "Taken",
+                    "Toke"
+                ],
+                correct: 1,
+                explanation: "Take is an irregular verb. The past simple is 'Took'."
+            },
+            {
+                id: 15,
+                type: "context",
+                question: "Why did Joey eat her dessert at the end of the scene?",
+                options: [
+                    "Because he loves cheesecake.",
+                    "Because he was paying for it.",
+                    "Because she took his fries, so he felt he could take hers.",
+                    "Because she didn't want it."
+                ],
+                correct: 2,
+                explanation: "He used the 'two-way street' logic: if she eats his food, he eats hers!"
+            }
+        ];
+
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            const [step, setStep] = useState('start'); // 'start', 'quiz', 'result'
+            const [currentQ, setCurrentQ] = useState(0);
+            const [score, setScore] = useState(0);
+            const [selectedOpt, setSelectedOpt] = useState(null);
+            const [showExplanation, setShowExplanation] = useState(false);
+
+            const startQuiz = () => {
+                setStep('quiz');
+                setCurrentQ(0);
+                setScore(0);
+            };
+
+            const handleOptionClick = (index) => {
+                if (selectedOpt !== null) return; // Prevent double clicking
+                setSelectedOpt(index);
+                setShowExplanation(true);
+
+                if (index === QUESTIONS[currentQ].correct) {
+                    setScore(s => s + 1);
+                }
+            };
+
+            const handleNext = () => {
+                if (currentQ < QUESTIONS.length - 1) {
+                    setCurrentQ(q => q + 1);
+                    setSelectedOpt(null);
+                    setShowExplanation(false);
+                } else {
+                    setStep('result');
+                }
+            };
+
+            // Calculate progress percentage
+            const progress = ((currentQ) / QUESTIONS.length) * 100;
+
+            // --- VIEWS ---
+
+            if (step === 'start') {
+                return (
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] animate-pop relative">
+                        <div className="w-16 h-16 bg-[#e50914] text-white font-black text-4xl flex items-center justify-center shadow-[0_0_30px_rgba(229,9,20,0.5)] mb-8">W</div>
+                        <h1 className="text-3xl font-black mb-2 uppercase tracking-tight">Student Mission</h1>
+                        <h2 className="text-xl text-[#e50914] font-bold mb-8 uppercase tracking-widest">Joey Doesn't Share Food</h2>
+                        
+                        <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 mb-10 w-full max-w-sm">
+                            <ul className="text-left text-gray-300 space-y-4 font-medium">
+                                <li className="flex items-center gap-3"><Icon name="check-circle" className="text-emerald-500"/> 15 Quick Challenges</li>
+                                <li className="flex items-center gap-3"><Icon name="bolt" className="text-yellow-500"/> Vocabulary & Grammar</li>
+                                <li className="flex items-center gap-3"><Icon name="play" className="text-[#e50914]"/> Scene Review at the end</li>
+                            </ul>
+                        </div>
+
+                        <button 
+                            onClick={startQuiz}
+                            className="w-full max-w-sm bg-[#e50914] hover:bg-[#b80710] text-white font-bold text-xl py-4 rounded-xl shadow-[0_0_20px_rgba(229,9,20,0.4)] transition-transform active:scale-95 uppercase tracking-widest"
+                        >
+                            Start Mission
+                        </button>
+                    </div>
+                );
+            }
+
+            if (step === 'result') {
+                const percentage = Math.round((score / QUESTIONS.length) * 100);
+                let message = "";
+                if (percentage >= 90) message = "NATIVE LEVEL! 🌟";
+                else if (percentage >= 70) message = "AWESOME JOB! 🔥";
+                else if (percentage >= 50) message = "GOOD EFFORT! 👍";
+                else message = "KEEP PRACTICING! 💪";
+
+                return (
+                    <div className="flex flex-col h-full bg-[#0a0a0a] animate-slideIn">
+                        <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center pb-12">
+                            
+                            <Icon name="trophy" size={64} className="text-yellow-400 mt-8 mb-4 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" />
+                            <h1 className="text-3xl font-black mb-1 uppercase tracking-tight text-center">{message}</h1>
+                            <p className="text-gray-400 font-medium mb-8">Mission Complete</p>
+
+                            <div className="bg-[#141414] border border-white/10 rounded-3xl p-8 w-full max-w-sm text-center mb-8 shadow-2xl">
+                                <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mb-2">Final Score</p>
+                                <div className="text-6xl font-black text-white mb-2">{score} <span className="text-2xl text-gray-500">/ {QUESTIONS.length}</span></div>
+                                <p className="text-emerald-400 font-bold">{percentage}% Accuracy</p>
+                            </div>
+
+                            <div className="w-full max-w-sm">
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Icon name="clapperboard" className="text-[#e50914]"/> Watch the Scene</h3>
+                                <div className="w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/10 shadow-lg">
+                                    <iframe 
+                                        className="w-full h-full" 
+                                        src={`https://www.youtube.com/embed/${YOUTUBE_ID}?rel=0&modestbranding=1`} 
+                                        frameBorder="0" 
+                                        allowFullScreen>
+                                    </iframe>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={() => setStep('start')}
+                                className="w-full max-w-sm bg-[#2b2b2b] text-white font-bold py-4 rounded-xl mt-8 transition-transform active:scale-95"
+                            >
+                                Back to Start
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- QUIZ VIEW ---
+            const question = QUESTIONS[currentQ];
+
+            return (
+                <div className="flex flex-col h-full bg-[#0a0a0a] relative">
+                    {/* Top Progress Bar */}
+                    <div className="w-full h-2 bg-[#1f1f1f]">
+                        <div 
+                            className="h-full bg-[#e50914] transition-all duration-500 shadow-[0_0_10px_rgba(229,9,20,0.8)]"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+
+                    {/* Header */}
+                    <div className="flex justify-between items-center p-4 border-b border-white/5">
+                        <div className="text-gray-500 font-bold text-sm tracking-widest">Q {currentQ + 1} OF {QUESTIONS.length}</div>
+                        <div className="bg-[#141414] border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
+                            <Icon name="star" size={12} className="text-yellow-500"/>
+                            <span className="text-white font-bold text-sm">{score}</span>
+                        </div>
+                    </div>
+
+                    {/* Question Area */}
+                    <div key={currentQ} className="flex-1 p-6 flex flex-col overflow-y-auto animate-slideIn">
+                        <span className="text-[#e50914] text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
+                            <Icon name={question.type === 'vocab' ? 'book' : question.type === 'grammar' ? 'crosshairs' : 'comment'} size={12} />
+                            {question.type} Check
+                        </span>
+                        <h2 className="text-2xl md:text-3xl font-black leading-tight mb-8">
+                            {question.question}
+                        </h2>
+
+                        <div className="flex flex-col gap-3 w-full mt-auto mb-8">
+                            {question.options.map((opt, i) => {
+                                const isSelected = selectedOpt === i;
+                                const isCorrectAnswer = i === question.correct;
+                                
+                                let btnStyle = "bg-[#1f1f1f] border-white/5 hover:border-white/20 text-gray-200";
+                                
+                                if (showExplanation) {
+                                    if (isCorrectAnswer) {
+                                        btnStyle = "bg-emerald-600/20 border-emerald-500 text-emerald-400";
+                                    } else if (isSelected && !isCorrectAnswer) {
+                                        btnStyle = "bg-red-600/20 border-[#e50914] text-[#e50914] animate-shake";
+                                    } else {
+                                        btnStyle = "opacity-40 bg-[#1f1f1f] border-transparent text-gray-500";
+                                    }
+                                }
+
+                                return (
+                                    <button 
+                                        key={i}
+                                        onClick={() => handleOptionClick(i)}
+                                        className={`w-full text-left p-5 rounded-xl border-2 font-bold text-lg transition-all duration-300 active:scale-[0.98] flex items-center justify-between ${btnStyle}`}
+                                    >
+                                        <span>{opt}</span>
+                                        {showExplanation && isCorrectAnswer && <Icon name="check" size={18} />}
+                                        {showExplanation && isSelected && !isCorrectAnswer && <Icon name="xmark" size={18} />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Explanation Box */}
+                        <div className={`transition-all duration-500 overflow-hidden ${showExplanation ? 'max-h-48 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
+                            <div className="bg-[#141414] border border-blue-500/30 border-l-4 border-l-blue-500 rounded-lg p-4">
+                                <p className="text-blue-400 text-xs uppercase font-bold tracking-widest mb-1">Explanation</p>
+                                <p className="text-gray-300 text-sm font-medium">{question.explanation}</p>
+                            </div>
+                        </div>
+
+                        {/* Next Button */}
+                        {showExplanation && (
+                            <button 
+                                onClick={handleNext}
+                                className="w-full bg-white text-black font-black text-lg py-4 rounded-xl mt-auto shadow-lg active:scale-95 transition-transform uppercase tracking-wider animate-pop"
+                            >
+                                {currentQ === QUESTIONS.length - 1 ? 'Finish Mission' : 'Next Question'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- RENDER APP ---
+        const rootElement = document.getElementById('root');
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(<App />);
+    </script>
+</body>
+</html>
